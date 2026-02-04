@@ -1,0 +1,35 @@
+services:
+  core-api:
+    build:
+      context: .
+      dockerfile: packages/core-api/Dockerfile
+    network_mode: "host"
+    environment:
+      - PIXIV_REFRESH_TOKEN=<your-pixiv-refresh-token>
+      - DATABASE_URL=file:./core.db
+      - LOG_LEVEL=info
+      - https_proxy=http://<proxy-ip>:<proxy-port>
+      - http_proxy=http://<proxy-ip>:<proxy-port>
+      - all_proxy=socks5://<proxy-ip>:<proxy-port>
+      - no_proxy=localhost,core-api,bot-service
+      - NO_PROXY=localhost,core-api,bot-service
+    restart: always
+
+  bot-service:
+    build:
+      context: .
+      dockerfile: packages/bot-service/Dockerfile
+    depends_on:
+      - core-api
+    network_mode: "host"
+    environment:
+      - BOT_TOKEN=<your-bot-token>
+      - DATABASE_URL=file:./bot.db
+      - CORE_API_URL=http://localhost:3000
+      - WEBHOOK_PORT=3001
+      - https_proxy=http://<proxy-ip>:<proxy-port>
+      - http_proxy=http://<proxy-ip>:<proxy-port>
+      - all_proxy=socks5://<proxy-ip>:<proxy-port>
+      - no_proxy=localhost,core-api,bot-service
+      - NO_PROXY=localhost,core-api,bot-service
+    restart: always

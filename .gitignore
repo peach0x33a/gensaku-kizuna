@@ -28,3 +28,5 @@ Thumbs.db
 *.sqlite
 *.db
 debug-scripts/temp.jpg
+
+docker-compose.yml
