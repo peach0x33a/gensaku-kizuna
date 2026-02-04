@@ -4,11 +4,8 @@ const configSchema = z.object({
   pixiv: z.object({
     refreshToken: z.string().min(1, "PIXIV_REFRESH_TOKEN is required"),
   }),
-  bot: z.object({
-    token: z.string().min(1, "BOT_TOKEN is required"),
-  }),
   database: z.object({
-    url: z.string().default("file:./db.sqlite"),
+    url: z.string().default("file:./core.db"),
   }),
   logLevel: z.enum(["debug", "info", "warn", "error"]).default("info"),
 });
@@ -19,9 +16,6 @@ export function loadConfig(): Config {
   const config = {
     pixiv: {
       refreshToken: process.env.PIXIV_REFRESH_TOKEN,
-    },
-    bot: {
-      token: process.env.BOT_TOKEN,
     },
     database: {
       url: process.env.DATABASE_URL,

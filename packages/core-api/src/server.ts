@@ -3,12 +3,30 @@ import { stream } from "hono/streaming";
 import { PixivClient } from "./client";
 import { loadConfig } from "./config";
 import { getPixivHeaders } from "./utils";
+import { CoreDB } from "./database";
+import { CoreScheduler } from "./scheduler";
 
 const app = new Hono();
 const config = loadConfig();
 const client = new PixivClient(config.pixiv.refreshToken);
+const db = new CoreDB();
+const botWebhookUrl = process.env.BOT_WEBHOOK_URL || "http://localhost:3001/webhook";
+const scheduler = new CoreScheduler(db, client, botWebhookUrl);
+
+// Start Scheduler
+scheduler.start();
 
 app.get("/health", (c: Context) => c.json({ status: "ok" }));
+
+app.post("/api/monitor", async (c: Context) => {
+  const body = await c.req.json();
+  const { artist_id, last_pid } = body;
+
+  if (!artist_id) return c.json({ error: "Missing artist_id" }, 400);
+
+  db.addMonitoredArtist(artist_id, last_pid);
+  return c.json({ status: "monitored", artist_id });
+});
 
 app.get("/api/user/:id/illusts", async (c: Context) => {
   const id = c.req.param("id");
