@@ -1,0 +1,17 @@
+{
+  "name": "gensaku-kizuna-monorepo",
+  "module": "index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --filter @gensaku-kizuna/core-api dev --watch"
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@biomejs/biome": "1.5.3",
+    "bun-types": "latest",
+    "typescript": "^5.0.0"
+  },
+  "private": true
+}
