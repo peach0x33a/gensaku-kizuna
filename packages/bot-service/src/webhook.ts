@@ -15,14 +15,20 @@ export class WebhookServer {
 
     private setupRoutes() {
         this.app.post("/webhook", async (c: HonoContext) => {
-            const body = await c.req.json();
+            try {
+                const body = await c.req.json();
 
-            if (body.type === "new_artwork") {
-                await this.handleNewArtwork(body.artist_id, body.illust);
-                return c.json({ status: "ok" });
+                if (body.type === "new_artwork") {
+                    await this.handleNewArtwork(body.artist_id, body.illust);
+                    return c.json({ status: "ok" });
+                }
+
+                console.warn(`Webhook received unknown type: ${body.type}`);
+                return c.json({ error: "Unknown type" }, 400);
+            } catch (e: any) {
+                console.error("Error processing webhook:", e);
+                return c.json({ error: e.message }, 500);
             }
-
-            return c.json({ error: "Unknown type" }, 400);
         });
     }
 

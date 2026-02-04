@@ -1,11 +1,11 @@
 import { AuthManager } from "./auth";
 import { getPixivHeaders } from "./utils";
-import type { 
-  Illust, 
-  IllustListResponse, 
-  UgoiraMetadata, 
-  UserDetail, 
-  UserListResponse 
+import type {
+  Illust,
+  IllustListResponse,
+  UgoiraMetadata,
+  UserDetail,
+  UserListResponse
 } from "./models";
 
 export class PixivClient {
@@ -61,6 +61,7 @@ export class PixivClient {
 
     if (!response.ok) {
       const err = await response.text();
+      console.error(`Pixiv API Request Failed: ${path}`, { status: response.status, body: err });
       throw new Error(`Pixiv API Error: ${response.status} ${err}`);
     }
 

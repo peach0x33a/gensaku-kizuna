@@ -17,6 +17,10 @@ const scheduler = new CoreScheduler(db, client, botWebhookUrl);
 scheduler.start();
 
 app.get("/health", (c: Context) => c.json({ status: "ok" }));
+app.onError((err, c) => {
+  console.error(`[Unhandled Error] ${c.req.method} ${c.req.url}:`, err);
+  return c.json({ error: err.message }, 500);
+});
 
 app.post("/api/monitor", async (c: Context) => {
   const body = await c.req.json();
@@ -35,6 +39,7 @@ app.get("/api/user/:id/illusts", async (c: Context) => {
     const res = await client.getUserIllusts(id, type);
     return c.json(res);
   } catch (e: any) {
+    console.error(`Error fetching user ${id} illusts:`, e);
     return c.json({ error: e.message }, 500);
   }
 });
@@ -45,6 +50,7 @@ app.get("/api/illust/:id", async (c: Context) => {
     const res = await client.getIllustDetail(id);
     return c.json(res);
   } catch (e: any) {
+    console.error(`Error fetching illust ${id} detail:`, e);
     return c.json({ error: e.message }, 500);
   }
 });
@@ -55,6 +61,7 @@ app.get("/api/user/:id", async (c: Context) => {
     const res = await client.getUserDetail(id);
     return c.json(res);
   } catch (e: any) {
+    console.error(`Error fetching user ${id} detail:`, e);
     return c.json({ error: e.message }, 500);
   }
 });
@@ -65,6 +72,7 @@ app.get("/api/ugoira/:id", async (c: Context) => {
     const res = await client.getUgoiraMetadata(id);
     return c.json(res);
   } catch (e: any) {
+    console.error(`Error fetching ugoira ${id} metadata:`, e);
     return c.json({ error: e.message }, 500);
   }
 });
@@ -98,6 +106,7 @@ app.get("/api/proxy-image", async (c) => {
     });
 
   } catch (e: any) {
+    console.error(`Error proxying image ${url}:`, e);
     return c.json({ error: e.message }, 500);
   }
 });
