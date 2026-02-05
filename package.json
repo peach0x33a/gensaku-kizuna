@@ -3,7 +3,8 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "dev": "bun run --filter @gensaku-kizuna/core-api dev --watch"
+    "dev:core": "bun run --filter @gensaku-kizuna/core-api dev --watch",
+    "dev:bot": "bun run --filter @gensaku-kizuna/bot-service dev --watch"
   },
   "workspaces": [
     "packages/*"

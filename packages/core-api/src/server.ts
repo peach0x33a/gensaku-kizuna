@@ -98,7 +98,7 @@ app.get("/api/proxy-image", async (c) => {
       "User-Agent": "PixivAndroidApp/5.0.234 (Android 11; Pixel 5)",
     };
 
-    const response = await fetch(url, { headers, verbose: true } as RequestInit);
+    const response = await fetch(url, { headers, verbose: process.env.DEBUG === "true" } as RequestInit);
 
     if (!response.ok) {
       return c.json({ error: `Failed to fetch image: ${response.status}` }, 500);

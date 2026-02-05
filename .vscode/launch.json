@@ -1,0 +1,39 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "pwa-node",
+      "request": "launch",
+      "name": "Debug Core API",
+      "runtimeExecutable": "bun",
+      "args": [
+        "run",
+        "--env-file=${workspaceFolder}/.env",
+        "src/index.ts"
+      ],
+      "cwd": "${workspaceFolder}/packages/core-api",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "type": "pwa-node",
+      "request": "launch",
+      "name": "Debug Bot Service",
+      "runtimeExecutable": "bun",
+      "args": [
+        "run",
+        "--env-file=${workspaceFolder}/.env",
+        "src/index.ts"
+      ],
+      "cwd": "${workspaceFolder}/packages/bot-service",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Debug All",
+      "configurations": ["Debug Core API", "Debug Bot Service"]
+    }
+  ]
+}

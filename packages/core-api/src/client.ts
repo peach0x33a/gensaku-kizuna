@@ -46,7 +46,7 @@ export class PixivClient {
 
     const response = await fetch(url.toString(), {
       headers: getPixivHeaders(this.accessToken),
-      verbose: true,
+      verbose: process.env.DEBUG === "true",
     } as RequestInit);
 
     if (response.status === 401) {
@@ -55,7 +55,7 @@ export class PixivClient {
       await this.ensureAuth();
       const retryResponse = await fetch(url.toString(), {
         headers: getPixivHeaders(this.accessToken),
-        verbose: true,
+        verbose: process.env.DEBUG === "true",
       } as RequestInit);
       if (!retryResponse.ok) throw new Error(`Pixiv API Error: ${retryResponse.status}`);
       return retryResponse.json() as Promise<T>;

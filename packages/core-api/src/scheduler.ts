@@ -1,4 +1,3 @@
-
 import cron from "node-cron";
 import { CoreDB } from "./database";
 import { PixivClient } from "./client";
@@ -26,10 +25,18 @@ export class CoreScheduler {
             try {
                 // Fetch latest works
                 const res = await this.client.getUserIllusts(artist.artist_id, "illust");
+                
+                // [DEBUG] Log polling result
+                console.log(`[DEBUG] Polling artist ${artist.artist_id}. Found ${res.illusts?.length ?? 0} illusts.`);
+
                 if (!res.illusts || res.illusts.length === 0) continue;
 
                 const latestIllust = res.illusts[0];
                 const latestId = latestIllust.id.toString();
+
+                // [DEBUG] Log check details
+                console.log(`[DEBUG] Artist ${artist.artist_id}: Latest ID=${latestId}, Last Known=${artist.last_pid}`);
+                console.log(`[DEBUG] Latest Illust Title: ${latestIllust.title}`);
 
                 // Check for updates
                 if (artist.last_pid !== latestId) {

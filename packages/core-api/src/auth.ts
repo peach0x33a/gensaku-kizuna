@@ -20,7 +20,7 @@ export class AuthManager {
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: formData,
-      verbose: true,
+      verbose: process.env.DEBUG === "true",
     } as RequestInit);
 
     if (!response.ok) {
