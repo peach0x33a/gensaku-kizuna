@@ -16,5 +16,8 @@
     "hono": "^4.11.7",
     "typescript": "^5.0.0"
   },
-  "private": true
+  "private": true,
+  "dependencies": {
+    "@fluent/bundle": "^0.19.1"
+  }
 }

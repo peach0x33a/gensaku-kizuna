@@ -1,6 +1,8 @@
 import { getPixivHeaders } from "./utils";
 import type { AuthResponse } from "./models";
+import { loadConfig } from "./config";
 
+const config = loadConfig();
 const CLIENT_ID = "MOBrBDS8blbauoSck0ZfDbtuzpyT";
 const CLIENT_SECRET = "lsACyCD94FhDUtGTXi3QzcFE2uU1hqtDaKeqrdwj";
 const AUTH_URL = "https://oauth.secure.pixiv.net/auth/token";
@@ -20,7 +22,7 @@ export class AuthManager {
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: formData,
-      verbose: process.env.DEBUG === "true",
+      verbose: config.verboseRequest,
     } as RequestInit);
 
     if (!response.ok) {

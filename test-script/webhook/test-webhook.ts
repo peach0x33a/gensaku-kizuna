@@ -12,7 +12,7 @@ async function testPush() {
             throw new Error(`Failed to fetch illust from Core API: ${coreRes.status}`);
         }
 
-        const data = await coreRes.json();
+        const data = await coreRes.json() as any;
         const illust = data.illust;
 
         if (!illust) {

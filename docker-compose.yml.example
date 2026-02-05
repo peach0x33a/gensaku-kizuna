@@ -8,6 +8,8 @@ services:
       - .env
     environment:
       - DATABASE_URL=file:./core.db
+      - DEBUG=false
+      - VERBOSE_REQUEST=false
     restart: always
 
   bot-service:
@@ -21,4 +23,6 @@ services:
       - .env
     environment:
       - DATABASE_URL=file:./bot.db
+      - DEBUG=false
+      - VERBOSE_REQUEST=false
     restart: always

@@ -13,6 +13,8 @@ const configSchema = z.object({
     webhook: z.object({
         port: z.coerce.number().default(3001),
     }),
+    debug: z.boolean().default(false),
+    verboseRequest: z.boolean().default(false),
 });
 
 export type Config = z.infer<typeof configSchema>;
@@ -31,6 +33,8 @@ export function loadConfig(): Config {
         webhook: {
             port: process.env.WEBHOOK_PORT,
         },
+        debug: process.env.DEBUG === "true",
+        verboseRequest: process.env.VERBOSE_REQUEST === "true",
     };
 
     try {

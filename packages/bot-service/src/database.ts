@@ -58,6 +58,17 @@ export class DB {
         return this.db.prepare("SELECT * FROM subscriptions").all() as Subscription[];
     }
 
+    getSubscribers(illustratorId: string): Subscription[] {
+        return this.db
+            .prepare("SELECT * FROM subscriptions WHERE illustrator_id = ?")
+            .all(illustratorId) as Subscription[];
+    }
+
+    getUserSubscriptions(userId: string): string[] {
+        const subs = this.getSubscriptions(userId);
+        return subs.map(s => s.illustrator_id);
+    }
+
     getAllSubscriptions(): Subscription[] {
         return this.db.prepare("SELECT * FROM subscriptions").all() as Subscription[];
     }

@@ -1,15 +1,21 @@
 import { BotContext } from "../context";
 import { CommandContext } from "grammy";
+import { cleanId } from "../utils";
 
 export async function subscribeLogic(ctx: BotContext, artistId: string, userId: string) {
+    const cleanedArtistId = cleanId(artistId);
     try {
         // 1. Validate artist via Core API
-        const response = await fetch(`${ctx.coreApiUrl}/api/user/${artistId}`);
+        const response = await fetch(`${ctx.coreApiUrl}/api/user/${cleanedArtistId}`);
         if (!response.ok) {
             if (response.status === 404) {
-                return ctx.reply("Artist not found.");
+                const msg = ctx.t("artist-not-found");
+                await ctx.reply(msg);
+                return { success: false, message: msg };
             }
-            return ctx.reply(`Error validating artist: ${response.statusText}`);
+            const msg = ctx.t("error-validating-artist", { error: response.statusText });
+            await ctx.reply(msg);
+            return { success: false, message: msg };
         }
 
         const data = await response.json() as { user: { name: string; id: string } };
@@ -18,7 +24,7 @@ export async function subscribeLogic(ctx: BotContext, artistId: string, userId: 
         // Fetch latest illust to initialize last_pid
         let lastPid: string | undefined;
         try {
-            const illustsRes = await fetch(`${ctx.coreApiUrl}/api/user/${artistId}/illusts?type=illust`);
+            const illustsRes = await fetch(`${ctx.coreApiUrl}/api/user/${cleanedArtistId}/illusts?type=illust`);
             if (illustsRes.ok) {
                 const illustsData = await illustsRes.json() as { illusts: any[] };
                 if (illustsData.illusts.length > 0) {
@@ -30,7 +36,7 @@ export async function subscribeLogic(ctx: BotContext, artistId: string, userId: 
         }
 
         // 2. Add to DB (Local Bot Subscription)
-        ctx.db.addSubscription(userId, artistId);
+        ctx.db.addSubscription(userId, cleanedArtistId);
 
         // 3. Notify Core API to Monitor
         try {
@@ -38,7 +44,7 @@ export async function subscribeLogic(ctx: BotContext, artistId: string, userId: 
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    artist_id: artistId,
+                    artist_id: cleanedArtistId,
                     last_pid: lastPid // Pass the latest PID we found so it doesn't alert immediately
                 })
             });
@@ -47,19 +53,27 @@ export async function subscribeLogic(ctx: BotContext, artistId: string, userId: 
         }
 
         // 4. Confirm
-        await ctx.reply(`Subscribed to **${artistName}** (ID: ${artistId})!${lastPid ? "" : "\n(No artworks found yet)"}`, {
+        const message = lastPid
+            ? ctx.t("subscribed-success", { name: artistName, id: cleanedArtistId })
+            : ctx.t("subscribed-success-no-artworks", { name: artistName, id: cleanedArtistId });
+
+        await ctx.reply(message, {
             parse_mode: "Markdown",
         });
+
+        return { success: true, message };
     } catch (error: any) {
         console.error(error);
-        await ctx.reply(`Failed to subscribe: ${error.message}`);
+        const failMessage = ctx.t("failed-subscribe", { error: error.message });
+        await ctx.reply(failMessage);
+        return { success: false, message: failMessage };
     }
 }
 
 export async function subscribeCommand(ctx: CommandContext<BotContext>) {
     const args = ctx.match;
     if (!args) {
-        return ctx.reply("Usage: /subscribe <artist_id>");
+        return ctx.reply(ctx.t("usage-subscribe"));
     }
 
     const artistId = args.trim();

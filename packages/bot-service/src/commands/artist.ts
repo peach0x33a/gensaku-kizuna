@@ -1,7 +1,7 @@
-
 import { BotContext } from "../context";
-import { CommandContext, InputFile, InlineKeyboard, HearsContext } from "grammy";
+import { CommandContext, InlineKeyboard, HearsContext, Api } from "grammy";
 import { UserDetail } from "@gensaku-kizuna/core-api";
+import { cleanId } from "../utils";
 
 // Accept a broader context that includes BotContext properties
 export async function artistCommand(ctx: BotContext) {
@@ -12,7 +12,7 @@ export async function artistCommand(ctx: BotContext) {
     if (typeof args === "string") {
         input = args.trim();
         if (!input) {
-            await ctx.reply("Usage: /artist <artist_id> or <url>");
+            await ctx.reply(ctx.t("usage-artist"));
             return;
         }
     } else if (Array.isArray(args)) {
@@ -22,6 +22,9 @@ export async function artistCommand(ctx: BotContext) {
 
     if (!input) return;
 
+    // Remove invisible characters that might interfere with regex
+    input = input.replace(/[\u2068\u2069]/g, '');
+
     // Match ID from URL (e.g. .../users/123) or direct digits
     const idMatch = input.match(/\/users\/(\d+)/) || input.match(/^(\d+)$/);
 
@@ -30,67 +33,76 @@ export async function artistCommand(ctx: BotContext) {
         if (/^\d+$/.test(input)) {
             // proceed with input as id
         } else {
-            await ctx.reply("Invalid input. Please provide a User ID or Pixiv User URL.");
+            await ctx.reply(ctx.t("invalid-input"));
             return;
         }
     }
 
     // If we matched a regex in bot.ts, args[1] is likely the ID directly if the regex was specific.
-    const artistId = idMatch ? idMatch[1] : input;
+    const artistId = cleanId(idMatch ? idMatch[1] : input);
 
     if (!ctx.chat) return;
 
-    const LOADING_MSG = await ctx.reply("🔍 Searching...");
+    const LOADING_MSG = await ctx.reply(ctx.t("searching"));
 
     try {
         await ctx.replyWithChatAction("typing");
-
-        // Fetch Artist Detail
-        const res = await fetch(`${ctx.coreApiUrl}/api/user/${artistId}`);
-        if (!res.ok) {
-            await ctx.api.deleteMessage(ctx.chat.id, LOADING_MSG.message_id);
-            if (res.status === 500) {
-                await ctx.reply("Artist not found (Pixiv API returned 404/500).");
-                return;
-            }
-            await ctx.reply(`Failed to fetch artist: ${res.statusText}`);
-            return;
-        }
-
-        const data = await res.json() as UserDetail;
-        const user = data.user;
-        const profile = data.profile;
-
-        const caption = `<b>${user.name}</b> (ID: ${user.id})\n\n` +
-            `🖼️ Illusts: ${profile.total_illusts}\n` +
-            `📚 Manga: ${profile.total_manga}\n` +
-            `👥 Followers: ${profile.total_follow_users}\n` +
-            `🔗 <a href="https://www.pixiv.net/users/${user.id}">Pixiv Profile</a>`;
-
-        // Proxy Profile Image via pixiv.re
-        const imageUrl = user.profile_image_urls.medium.replace("i.pximg.net", "i.pixiv.re");
-
-        await ctx.api.deleteMessage(ctx.chat.id, LOADING_MSG.message_id);
-
-        try {
-            await ctx.replyWithPhoto(imageUrl, {
-                caption: caption,
-                parse_mode: "HTML",
-                reply_markup: new InlineKeyboard()
-                    .url("Open in Pixiv", `https://www.pixiv.net/users/${user.id}`)
-                    .text("Subscribe", `sub:${user.id}`)
-            });
-        } catch (e) {
-            console.error("Failed to send photo via pixiv.re, falling back to text:", e);
-            await ctx.reply(caption, { parse_mode: "HTML" });
-        }
-
-
+        await sendArtist(ctx, artistId, LOADING_MSG.message_id);
     } catch (error) {
         console.error("Artist command error:", error);
         if (ctx.chat) {
             try { await ctx.api.deleteMessage(ctx.chat.id, LOADING_MSG.message_id); } catch { }
-            await ctx.reply(`Error: ${error instanceof Error ? error.message : String(error)}`);
+            await ctx.reply(ctx.t("error-generic") + `: ${error instanceof Error ? error.message : String(error)}`);
         }
+    }
+}
+
+export async function sendArtist(ctx: BotContext, artistId: string, loadingMessageId?: number) {
+    if (!ctx.chat) return;
+
+    // Fetch Artist Detail
+    const res = await fetch(`${ctx.coreApiUrl}/api/user/${artistId}`);
+    if (!res.ok) {
+        if (loadingMessageId) {
+            try { await ctx.api.deleteMessage(ctx.chat.id, loadingMessageId); } catch {}
+        }
+        if (res.status === 500) {
+            await ctx.reply(ctx.t("artist-not-found"));
+            return;
+        }
+        await ctx.reply(ctx.t("error-validating-artist", { error: res.statusText }));
+        return;
+    }
+
+    const data = await res.json() as UserDetail;
+    const user = data.user;
+    const profile = data.profile;
+
+    const caption = ctx.t("artist-caption", {
+        name: user.name,
+        id: String(user.id),
+        illusts: profile.total_illusts,
+        manga: profile.total_manga,
+        followers: profile.total_follow_users
+    });
+
+    // Proxy Profile Image via pixiv.re
+    const imageUrl = user.profile_image_urls.medium.replace("i.pximg.net", "i.pixiv.re");
+
+    if (loadingMessageId) {
+        try { await ctx.api.deleteMessage(ctx.chat.id, loadingMessageId); } catch {}
+    }
+
+    try {
+        await ctx.replyWithPhoto(imageUrl, {
+            caption: caption,
+            parse_mode: "HTML",
+            reply_markup: new InlineKeyboard()
+                .url(ctx.t("btn-open-pixiv"), `https://www.pixiv.net/users/${user.id}`)
+                .text(ctx.t("subscribe"), `sub:${user.id}`)
+        });
+    } catch (e) {
+        console.error("Failed to send photo via pixiv.re, falling back to text:", e);
+        await ctx.reply(caption, { parse_mode: "HTML" });
     }
 }

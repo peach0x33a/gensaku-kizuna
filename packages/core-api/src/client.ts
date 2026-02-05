@@ -1,5 +1,6 @@
 import { AuthManager } from "./auth";
 import { getPixivHeaders } from "./utils";
+import { loadConfig } from "./config";
 import type {
   Illust,
   IllustListResponse,
@@ -7,6 +8,8 @@ import type {
   UserDetail,
   UserListResponse
 } from "./models";
+
+const config = loadConfig();
 
 export class PixivClient {
   private accessToken?: string;
@@ -46,7 +49,7 @@ export class PixivClient {
 
     const response = await fetch(url.toString(), {
       headers: getPixivHeaders(this.accessToken),
-      verbose: process.env.DEBUG === "true",
+      verbose: config.verboseRequest,
     } as RequestInit);
 
     if (response.status === 401) {
@@ -55,7 +58,7 @@ export class PixivClient {
       await this.ensureAuth();
       const retryResponse = await fetch(url.toString(), {
         headers: getPixivHeaders(this.accessToken),
-        verbose: process.env.DEBUG === "true",
+        verbose: config.verboseRequest,
       } as RequestInit);
       if (!retryResponse.ok) throw new Error(`Pixiv API Error: ${retryResponse.status}`);
       return retryResponse.json() as Promise<T>;

@@ -8,6 +8,8 @@ const configSchema = z.object({
     url: z.string().default("file:./core.db"),
   }),
   logLevel: z.enum(["debug", "info", "warn", "error"]).default("info"),
+  debug: z.boolean().default(false),
+  verboseRequest: z.boolean().default(false),
 });
 
 export type Config = z.infer<typeof configSchema>;
@@ -21,6 +23,8 @@ export function loadConfig(): Config {
       url: process.env.DATABASE_URL,
     },
     logLevel: process.env.LOG_LEVEL,
+    debug: process.env.DEBUG === "true",
+    verboseRequest: process.env.VERBOSE_REQUEST === "true",
   };
 
   try {
