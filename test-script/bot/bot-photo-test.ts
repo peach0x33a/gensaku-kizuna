@@ -1,6 +1,6 @@
 
 // @ts-ignore
-import { Bot, InputFile } from "../node_modules/.bun/grammy@1.39.3/node_modules/grammy";
+import { Bot, InputFile } from "../../node_modules/.bun/grammy@1.39.3/node_modules/grammy";
 
 // Run from root: bun run debug-scripts/bot-photo-test.ts
 const env = await Bun.file(".env").text();
@@ -14,6 +14,7 @@ if (!token) {
 const bot = new Bot(token);
 
 async function test() {
+    if (!token) return;
     console.log("Using Token:", token.slice(0, 5) + "...");
 
     // Create a simple red 1x1 pixel JPEG
@@ -35,12 +36,12 @@ async function test() {
 
     console.log("Attempting sendPhoto (File Path)...");
     try {
-        await Bun.write("debug-scripts/temp.jpg", buffer);
-        await bot.api.sendPhoto(userId, new InputFile("debug-scripts/temp.jpg"), {
+        await Bun.write("test-script/bot/assets/temp.jpg", buffer);
+        await bot.api.sendPhoto(userId, new InputFile("test-script/bot/assets/temp.jpg"), {
             caption: "Test Photo from Debug Script (File Path)"
         });
         console.log("Success: sendPhoto (File Path) worked.");
-        // await Bun.file("debug-scripts/temp.jpg").delete(); // Cleanup later
+        // await Bun.file("test-script/bot/assets/temp.jpg").delete(); // Cleanup later
     } catch (e) {
         console.error("Failure: sendPhoto (File Path) failed.");
         console.error(e);

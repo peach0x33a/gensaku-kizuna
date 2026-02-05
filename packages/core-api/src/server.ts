@@ -7,6 +7,16 @@ import { CoreDB } from "./database";
 import { CoreScheduler } from "./scheduler";
 
 const app = new Hono();
+
+// Logger Middleware
+app.use("*", async (c, next) => {
+  const time = new Date().toISOString();
+  const method = c.req.method;
+  const url = c.req.url;
+  console.log(`[${time}] ${method} ${url}`);
+  await next();
+});
+
 const config = loadConfig();
 const client = new PixivClient(config.pixiv.refreshToken);
 const db = new CoreDB();
@@ -88,7 +98,7 @@ app.get("/api/proxy-image", async (c) => {
       "User-Agent": "PixivAndroidApp/5.0.234 (Android 11; Pixel 5)",
     };
 
-    const response = await fetch(url, { headers });
+    const response = await fetch(url, { headers, verbose: true } as RequestInit);
 
     if (!response.ok) {
       return c.json({ error: `Failed to fetch image: ${response.status}` }, 500);

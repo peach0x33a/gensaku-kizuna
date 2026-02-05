@@ -22,5 +22,5 @@
       "@gensaku-kizuna/*": ["./packages/*/src/index.ts"]
     }
   },
-  "include": ["packages", "debug-scripts", "*.ts"]
+  "include": ["packages", "test-script", "*.ts"]
 }

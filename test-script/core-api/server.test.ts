@@ -12,7 +12,7 @@ import { Hono } from "hono";
 // However, our server.ts doesn't export `app` directly, it exports { fetch }.
 // That is sufficient for app.request(req).
 
-const { default: server } = await import("../src/server");
+const { default: server } = await import("../../packages/core-api/src/server");
 
 describe("Server API", () => {
 
@@ -31,10 +31,10 @@ describe("Server API", () => {
     });
 
     test("GET /api/proxy-image proxies request with referer", async () => {
-        const originalFetch = global.fetch;
+        const originalFetch = globalThis.fetch;
 
         // Mock the upstream image fetch
-        global.fetch = mock(() => Promise.resolve(new Response("image_data", {
+        globalThis.fetch = mock(() => Promise.resolve(new Response("image_data", {
             status: 200,
             headers: { "Content-Type": "image/png" }
         }))) as any;
@@ -48,8 +48,8 @@ describe("Server API", () => {
         expect(await res.text()).toBe("image_data");
 
         // Verify headers sent to upstream
-        expect(global.fetch).toHaveBeenCalled();
-        const callArgs = (global.fetch as any).mock.lastCall;
+        expect(globalThis.fetch).toHaveBeenCalled();
+        const callArgs = (globalThis.fetch as any).mock.lastCall;
         const fetchUrl = callArgs[0];
         const fetchOptions = callArgs[1];
 
@@ -57,6 +57,6 @@ describe("Server API", () => {
         expect(fetchOptions.headers["Referer"]).toBe("https://app-api.pixiv.net/");
         expect(fetchOptions.headers["User-Agent"]).toContain("PixivAndroidApp");
 
-        global.fetch = originalFetch;
+        globalThis.fetch = originalFetch;
     });
 });

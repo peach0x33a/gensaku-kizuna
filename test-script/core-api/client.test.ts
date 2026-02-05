@@ -1,6 +1,6 @@
 import { describe, expect, test, mock, spyOn } from "bun:test";
-import { PixivClient } from "../src/client";
-import { getPixivHeaders, generateHash } from "../src/utils";
+import { PixivClient } from "../../packages/core-api/src/client";
+import { getPixivHeaders, generateHash } from "../../packages/core-api/src/utils";
 
 describe("Utils", () => {
     test("generateHash should produce correct MD5 hash", () => {
@@ -27,7 +27,7 @@ describe("Utils", () => {
 
 describe("PixivClient", () => {
     // Mock fetch for all tests
-    const originalFetch = global.fetch;
+    const originalFetch = globalThis.fetch;
 
     // Helper to mock successful JSON response
     const mockJson = (data: any) => mock(() => Promise.resolve({
@@ -45,17 +45,17 @@ describe("PixivClient", () => {
         // @ts-ignore
         client.expiresAt = Date.now() + 10000000;
 
-        global.fetch = mockJson({ illusts: [] }) as any;
+        globalThis.fetch = mockJson({ illusts: [] }) as any;
 
         await client.getUserIllusts(12345, "manga");
 
-        expect(global.fetch).toHaveBeenCalledTimes(1);
-        const url = new URL((global.fetch as any).mock.lastCall[0]);
+        expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+        const url = new URL((globalThis.fetch as any).mock.lastCall[0]);
         expect(url.pathname).toBe("/v1/user/illusts");
         expect(url.searchParams.get("user_id")).toBe("12345");
         expect(url.searchParams.get("type")).toBe("manga");
 
-        global.fetch = originalFetch;
+        globalThis.fetch = originalFetch;
     });
 
     test("getIllustDetail calls correct endpoint", async () => {
@@ -65,15 +65,15 @@ describe("PixivClient", () => {
         // @ts-ignore
         client.expiresAt = Date.now() + 10000000;
 
-        global.fetch = mockJson({ illust: { id: "999" } }) as any;
+        globalThis.fetch = mockJson({ illust: { id: "999" } }) as any;
 
         await client.getIllustDetail("999");
 
-        const url = new URL((global.fetch as any).mock.lastCall[0]);
+        const url = new URL((globalThis.fetch as any).mock.lastCall[0]);
         expect(url.pathname).toBe("/v1/illust/detail");
         expect(url.searchParams.get("illust_id")).toBe("999");
 
-        global.fetch = originalFetch;
+        globalThis.fetch = originalFetch;
     });
 
     test("getUgoiraMetadata calls correct endpoint", async () => {
@@ -83,14 +83,14 @@ describe("PixivClient", () => {
         // @ts-ignore
         client.expiresAt = Date.now() + 10000000;
 
-        global.fetch = mockJson({ ugoira_metadata: {} }) as any;
+        globalThis.fetch = mockJson({ ugoira_metadata: {} }) as any;
 
         await client.getUgoiraMetadata("555");
 
-        const url = new URL((global.fetch as any).mock.lastCall[0]);
+        const url = new URL((globalThis.fetch as any).mock.lastCall[0]);
         expect(url.pathname).toBe("/v1/ugoira/metadata");
         expect(url.searchParams.get("illust_id")).toBe("555");
 
-        global.fetch = originalFetch;
+        globalThis.fetch = originalFetch;
     });
 });

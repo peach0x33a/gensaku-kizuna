@@ -1,6 +1,6 @@
 
-import { loadConfig } from "../packages/core-api/src/config";
-import { PixivClient } from "../packages/core-api/src/client";
+import { loadConfig } from "../../packages/core-api/src/config";
+import { PixivClient } from "../../packages/core-api/src/client";
 
 async function test() {
     console.log("Loading config...");

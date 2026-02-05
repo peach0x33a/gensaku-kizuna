@@ -20,7 +20,8 @@ export class AuthManager {
         "Content-Type": "application/x-www-form-urlencoded",
       },
       body: formData,
-    });
+      verbose: true,
+    } as RequestInit);
 
     if (!response.ok) {
       const error = await response.text();
