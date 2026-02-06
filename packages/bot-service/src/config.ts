@@ -15,6 +15,7 @@ const configSchema = z.object({
     }),
     debug: z.boolean().default(false),
     verboseRequest: z.boolean().default(false),
+    stacktrace: z.boolean().default(false),
 });
 
 export type Config = z.infer<typeof configSchema>;
@@ -35,6 +36,7 @@ export function loadConfig(): Config {
         },
         debug: process.env.DEBUG === "true",
         verboseRequest: process.env.VERBOSE_REQUEST === "true",
+        stacktrace: process.env.STACKTRACE === "true",
     };
 
     try {

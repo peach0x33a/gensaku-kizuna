@@ -1,4 +1,4 @@
-import { Bot, Context, InlineKeyboard } from "grammy";
+import { Bot, Context, InlineKeyboard, GrammyError, HttpError } from "grammy";
 import { DB } from "./database";
 import { WebhookServer } from "./webhook";
 import { subscribeCommand, subscribeLogic } from "./commands/subscribe";
@@ -17,11 +17,13 @@ export class GensakuBot {
     private bot: Bot<BotContext>;
     private db: DB;
     private webhookServer: WebhookServer;
+    private stacktrace: boolean;
 
-    constructor(token: string, coreApiUrl: string, dbPath?: string) {
+    constructor(token: string, coreApiUrl: string, dbPath?: string, stacktrace: boolean = false) {
         this.db = new DB(dbPath);
         this.bot = new Bot<BotContext>(token);
         this.webhookServer = new WebhookServer(this.bot, this.db, coreApiUrl);
+        this.stacktrace = stacktrace;
 
         // Middleware
         this.bot.use(i18n);
@@ -315,7 +317,14 @@ export class GensakuBot {
 
         // Error handling
         this.bot.catch((err) => {
-            console.error("Bot Error:", err);
+            const e = err.error;
+            if (!this.stacktrace && e instanceof GrammyError) {
+                console.error(`GrammyError: ${e.error_code} ${e.description}`);
+            } else if (!this.stacktrace && e instanceof HttpError) {
+                console.error(`HttpError: ${e.message}`);
+            } else {
+                console.error("Bot Error:", err);
+            }
         });
     }
 
