@@ -50,11 +50,11 @@ app.onError((err, c) => {
 
 app.post("/api/monitor", async (c: Context) => {
   const body = await c.req.json();
-  const { artist_id, last_pid } = body;
+  const { artist_id, last_pid, artist_name } = body;
 
   if (!artist_id) return c.json({ error: "Missing artist_id" }, 400);
 
-  db.addMonitoredArtist(artist_id, last_pid);
+  db.addMonitoredArtist(artist_id, last_pid, artist_name);
   return c.json({ status: "monitored", artist_id });
 });
 

@@ -7,9 +7,7 @@ services:
     env_file:
       - .env
     environment:
-      - DATABASE_URL=file:./core.db
-      - DEBUG=false
-      - VERBOSE_REQUEST=false
+      - API_DB_URL=file:./core.db
     restart: always
 
   bot-service:
@@ -22,7 +20,5 @@ services:
     env_file:
       - .env
     environment:
-      - DATABASE_URL=file:./bot.db
-      - DEBUG=false
-      - VERBOSE_REQUEST=false
+      - BOT_DB_URL=file:./bot.db
     restart: always

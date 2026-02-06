@@ -25,7 +25,7 @@ export function loadConfig(): Config {
             token: process.env.BOT_TOKEN,
         },
         database: {
-            url: process.env.DATABASE_URL,
+            url: process.env.BOT_DB_URL || process.env.DATABASE_URL,
         },
         coreApi: {
             url: process.env.CORE_API_URL,

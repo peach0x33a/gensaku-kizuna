@@ -45,7 +45,8 @@ export async function subscribeLogic(ctx: BotContext, artistId: string, userId: 
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     artist_id: cleanedArtistId,
-                    last_pid: lastPid // Pass the latest PID we found so it doesn't alert immediately
+                    last_pid: lastPid, // Pass the latest PID we found so it doesn't alert immediately
+                    artist_name: artistName
                 })
             });
         } catch (e) {

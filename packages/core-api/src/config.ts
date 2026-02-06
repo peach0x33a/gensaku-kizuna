@@ -7,6 +7,7 @@ const configSchema = z.object({
   database: z.object({
     url: z.string().default("file:./core.db"),
   }),
+  pollInterval: z.number().default(900),
   logLevel: z.enum(["debug", "info", "warn", "error"]).default("info"),
   debug: z.boolean().default(false),
   verboseRequest: z.boolean().default(false),
@@ -20,8 +21,11 @@ export function loadConfig(): Config {
       refreshToken: process.env.PIXIV_REFRESH_TOKEN,
     },
     database: {
-      url: process.env.DATABASE_URL,
+      url: process.env.API_DB_URL || process.env.DATABASE_URL,
     },
+    pollInterval: process.env.POLL_INTERVAL && !isNaN(parseInt(process.env.POLL_INTERVAL)) 
+      ? parseInt(process.env.POLL_INTERVAL) 
+      : undefined,
     logLevel: process.env.LOG_LEVEL,
     debug: process.env.DEBUG === "true",
     verboseRequest: process.env.VERBOSE_REQUEST === "true",

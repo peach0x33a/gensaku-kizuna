@@ -2,6 +2,7 @@ import { BotContext } from "../context";
 import { CommandContext, InlineKeyboard } from "grammy";
 import { artistCommand } from "./artist";
 import { illustCommand } from "./illust";
+import { generateSubscriptionListMessage } from "./list";
 
 export async function startCommand(ctx: CommandContext<BotContext>) {
     const keyboard = new InlineKeyboard()
@@ -14,14 +15,25 @@ export async function startCommand(ctx: CommandContext<BotContext>) {
 export async function handleStartCallbacks(ctx: BotContext, action: string) {
     switch (action) {
         case "list":
-            // We can't directly call listCommand because the context type is slightly different
-            // for callbacks vs commands if we were strict, but passing ctx mostly works 
-            // OR we can just redirect or instruct the user.
-            // But better: trigger the command logic.
-            // Since listCommand takes CommandContext which extends Context, and CallbackQuery context is also Context...
-            // We need to be careful. Let's just instruct user or run logic if isolated.
-            // For now, let's reply with text instructions or simulate command.
-            await ctx.reply(ctx.t("run-list-to-see"));
+            const userId = ctx.from?.id.toString();
+            if (userId) {
+                const { text, keyboard } = await generateSubscriptionListMessage(ctx, userId);
+                try {
+                    await ctx.editMessageText(text, {
+                        parse_mode: "HTML",
+                        reply_markup: keyboard,
+                        link_preview_options: { is_disabled: true }
+                    });
+                } catch (e) {
+                    // Fallback to reply if edit fails (e.g. message too old)
+                    console.error("Failed to edit message for list callback", e);
+                    await ctx.reply(text, {
+                        parse_mode: "HTML",
+                        reply_markup: keyboard,
+                        link_preview_options: { is_disabled: true }
+                    });
+                }
+            }
             break;
         case "help":
             await ctx.reply(ctx.t("help-message"));
