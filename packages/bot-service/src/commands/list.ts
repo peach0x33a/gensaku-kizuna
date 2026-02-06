@@ -59,7 +59,10 @@ export async function generateSubscriptionListMessage(ctx: BotContext, userId: s
         const name = monitorInfo?.artist_name || sub.illustrator_id;
         const display = name.length > 15 ? name.substring(0, 12) + "..." : name;
         
-        keyboard.text(`${ctx.t("btn-unsubscribe")} ${display}`, `unsub:${sub.illustrator_id}`).row();
+        // Show row: [Unsubscribe Name] [Latest]
+        keyboard.text(`${ctx.t("btn-unsubscribe")} ${display}`, `unsub:${sub.illustrator_id}`);
+        keyboard.text(ctx.t("btn-view-artist-latest"), `view_artist_latest:${sub.illustrator_id}`);
+        keyboard.row();
     }
     
     if (recentlyUnsubscribedId) {

@@ -58,7 +58,9 @@ btn-resubscribe = ↩️ Resubscribe
 list-update-button = 🔄 Check for Updates
 update-triggered = 🚀 Update check triggered!
 no-updates-found = ✅ No new artworks found.
-btn-view-last-illust = 🖼️ View Latest Work
+btn-view-last-illust = View Latest Work
+no-illusts-found = No artworks found for this artist.
+btn-view-artist-latest = View Latest Work
 btn-back-to-list = 🔙 Back to List
 btn-download-zip = 📦 Download ZIP
 btn-view-artist = 👤 View Artist
@@ -92,8 +94,11 @@ illust-caption =
     { $nsfwPrefix }<b>{ $title }</b>
     by <a href="https://www.pixiv.net/users/{ $authorId }">{ $authorName }</a>
     ID: <a href="https://www.pixiv.net/artworks/{ $id }">{ $id }</a>
+    Date: { $date }
     Tags: { $tagsLink }
     Hashtags: { $tagsHash }
+    
+    { $description }
 
 ugoira-label = 🎬 <b>Ugoira (Animated)</b>
 download-zip = ⬇️ <a href="{ $url }">Download ZIP</a>

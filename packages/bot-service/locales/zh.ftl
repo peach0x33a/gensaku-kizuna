@@ -60,7 +60,9 @@ btn-resubscribe = ↩️ 重新订阅
 list-update-button = 🔄 立即检查更新
 update-triggered = 🚀 更新检查已触发！
 no-updates-found = ✅ 当前没有新作品。
-btn-view-last-illust = 🖼️ 查看最新作品
+btn-view-last-illust = 查看最新作品
+no-illusts-found = 未找到该画师的作品。
+btn-view-artist-latest = 查看最新作品
 btn-back-to-list = 🔙 返回列表
 btn-download-zip = 📦 下载 ZIP
 btn-view-artist = 👤 查看画师
@@ -94,8 +96,11 @@ illust-caption =
     { $nsfwPrefix }<b>{ $title }</b>
     作者：<a href="https://www.pixiv.net/users/{ $authorId }">{ $authorName }</a>
     ID：<a href="https://www.pixiv.net/artworks/{ $id }">{ $id }</a>
+    日期：{ $date }
     标签：{ $tagsLink }
     Hashtags: { $tagsHash }
+
+    { $description }
 
 ugoira-label = 🎬 <b>Ugoira (动图)</b>
 download-zip = ⬇️ <a href="{ $url }">下载 ZIP</a>

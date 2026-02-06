@@ -266,6 +266,25 @@ export class GensakuBot {
                 const artistId = data.split(":")[1];
                 await ctx.answerCallbackQuery(ctx.t("searching"));
                 await sendArtist(ctx as unknown as BotContext, artistId);
+            } else if (data.startsWith("view_artist_latest:")) {
+                const artistId = data.split(":")[1];
+                await ctx.answerCallbackQuery(ctx.t("searching"));
+                
+                try {
+                    const res = await fetch(`${coreApiUrl}/api/user/${artistId}/illusts?type=illust`);
+                    if (!res.ok) throw new Error("API Error");
+                    const data = await res.json() as any;
+                    
+                    if (data.illusts && data.illusts.length > 0) {
+                        const illust = data.illusts[0];
+                        await sendIllust(ctx as unknown as BotContext, illust);
+                    } else {
+                        await ctx.reply(ctx.t("no-illusts-found"));
+                    }
+                } catch (e) {
+                    console.error("Error viewing latest illust:", e);
+                    await ctx.reply(ctx.t("error-generic"));
+                }
             } else if (data.startsWith("view_illust:")) {
                  const illustId = data.split(":")[1];
                  // await ctx.answerCallbackQuery(); // Don't answer yet, waiting for fetch

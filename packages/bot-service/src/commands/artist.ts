@@ -93,16 +93,29 @@ export async function sendArtist(ctx: BotContext, artistId: string, loadingMessa
         try { await ctx.api.deleteMessage(ctx.chat.id, loadingMessageId); } catch {}
     }
 
+    const userId = ctx.from?.id.toString();
+    const isSubscribed = userId ? ctx.db.getSubscriptions(userId).some(s => s.illustrator_id === String(user.id)) : false;
+
+    const keyboard = new InlineKeyboard()
+        .url(ctx.t("btn-open-pixiv"), `https://www.pixiv.net/users/${user.id}`)
+        .text(
+            isSubscribed ? ctx.t("btn-unsubscribe") : ctx.t("subscribe"),
+            isSubscribed ? `unsub:${user.id}` : `sub:${user.id}`
+        )
+        .row()
+        .text(ctx.t("btn-view-artist-latest"), `view_artist_latest:${user.id}`);
+
     try {
         await ctx.replyWithPhoto(imageUrl, {
             caption: caption,
             parse_mode: "HTML",
-            reply_markup: new InlineKeyboard()
-                .url(ctx.t("btn-open-pixiv"), `https://www.pixiv.net/users/${user.id}`)
-                .text(ctx.t("subscribe"), `sub:${user.id}`)
+            reply_markup: keyboard
         });
     } catch (e) {
         console.error("Failed to send photo via pixiv.re, falling back to text:", e);
-        await ctx.reply(caption, { parse_mode: "HTML" });
+        await ctx.reply(caption, { 
+            parse_mode: "HTML",
+            reply_markup: keyboard
+        });
     }
 }

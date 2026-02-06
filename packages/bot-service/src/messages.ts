@@ -19,14 +19,30 @@ export function formatIllustMessage(illust: Illust, t: (key: string, args?: any)
     // Format tags: separate into Pixiv Links and Telegram Hashtags
     const { tagsLink, tagsHash } = processTags(illust.tags);
 
+    // Format date (UTC+8)
+    const date = new Date(illust.create_date);
+    const dateStr = date.toLocaleString('sv-SE', {
+        timeZone: 'Asia/Shanghai',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+
+    const description = processCaption(illust.caption);
+
     const caption = t("illust-caption", {
         nsfwPrefix,
         title: escapeHtml(illust.title),
         authorId: String(illust.user.id),
         authorName: escapeHtml(illust.user.name),
         id: String(illust.id),
+        date: dateStr,
         tagsLink,
-        tagsHash
+        tagsHash,
+        description: escapeHtml(description)
     });
 
     const keyboard = new InlineKeyboard()
@@ -80,6 +96,9 @@ export function formatIllustMessage(illust: Illust, t: (key: string, args?: any)
 
     // Single Image
     const imageUrl = illust.image_urls.large.replace("i.pximg.net", "i.pixiv.re");
+    
+    // Add "Download Original" button for single image
+    keyboard.row().text(t("btn-download-orig"), `orig:${illust.id}`);
 
     return {
         type: "photo",
@@ -89,6 +108,21 @@ export function formatIllustMessage(illust: Illust, t: (key: string, args?: any)
         reply_markup: keyboard,
         has_spoiler: isNsfw
     };
+}
+
+function processCaption(caption: string): string {
+    if (!caption) return "";
+    // Replace <br> with newline
+    let processed = caption.replace(/<br\s*\/?>/gi, '\n');
+    // Strip HTML tags
+    processed = processed.replace(/<[^>]*>?/gm, '');
+    // Trim
+    processed = processed.trim();
+    // Truncate to avoid hitting limits (Telegram 1024, but we have other text)
+    if (processed.length > 500) {
+        processed = processed.substring(0, 497) + "...";
+    }
+    return processed;
 }
 
 function processTags(tags: any[]): { tagsLink: string, tagsHash: string } {
