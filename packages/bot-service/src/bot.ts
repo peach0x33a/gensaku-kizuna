@@ -10,6 +10,7 @@ import { illustCommand, downloadOriginalLogic, downloadZipLogic, pageSelectionLo
 import { startCommand, handleStartCallbacks } from "./commands/start";
 import { statusCommand } from "./commands/status";
 import { i18n } from "./locales";
+import { logger } from "./utils";
 
 import { BotContext } from "./context";
 
@@ -18,12 +19,14 @@ export class GensakuBot {
     private db: DB;
     private webhookServer: WebhookServer;
     private stacktrace: boolean;
+    private coreApiUrl: string;
 
     constructor(token: string, coreApiUrl: string, dbPath?: string, stacktrace: boolean = false) {
         this.db = new DB(dbPath);
         this.bot = new Bot<BotContext>(token);
         this.webhookServer = new WebhookServer(this.bot, this.db, coreApiUrl);
         this.stacktrace = stacktrace;
+        this.coreApiUrl = coreApiUrl;
 
         // Middleware
         this.bot.use(i18n);
@@ -35,27 +38,25 @@ export class GensakuBot {
 
         // Logger Middleware (Incoming)
         this.bot.use(async (ctx, next) => {
-            const time = new Date().toISOString();
             const user = ctx.from;
             const username = user?.username || user?.first_name || "Unknown";
             const userId = user?.id || "Unknown";
             const msg = ctx.message?.text || ctx.callbackQuery?.data || (ctx.message?.photo ? '[Photo]' : '[Non-text update]');
 
-            console.log(`[${time}] <- FROM ${username} (${userId}): ${msg}`);
+            logger.info(`<- FROM ${username} (${userId}): ${msg}`);
             await next();
         });
 
         // Logger Transformer (Outgoing)
         this.bot.api.config.use(async (prev, method, payload, signal) => {
             const res = await prev(method, payload, signal);
-            const time = new Date().toISOString();
 
             // Only log sending methods
             if (method.startsWith("send") || method === "copyMessage") {
                 const p = payload as any;
                 const targetId = p.chat_id;
                 const text = p.text || p.caption || `[${method}]`;
-                console.log(`[${time}] -> TO ${targetId}: ${text}`);
+                logger.info(`-> TO ${targetId}: ${text}`);
             }
             return res;
         });
@@ -79,6 +80,16 @@ export class GensakuBot {
         this.bot.command("artist", (ctx) => artistCommand(ctx as unknown as BotContext));
         this.bot.command("illust", (ctx) => illustCommand(ctx as unknown as BotContext));
 
+        this.bot.command("sync", async (ctx) => {
+            await ctx.reply(ctx.t("sync-start") || "Starting synchronization with Core API...");
+            try {
+                const count = await this.syncSubscriptions();
+                await ctx.reply((ctx.t("sync-complete") || "Synchronization complete.") + ` Synced ${count} artists.`);
+            } catch (e: any) {
+                await ctx.reply((ctx.t("sync-error") || "Synchronization failed:") + " " + e.message);
+            }
+        });
+
         // Auto-parsing (Regex)
         // Match user profiles: https://www.pixiv.net/users/123 or /en/users/123
         const userUrlRegex = /pixiv\.net\/(?:en\/)?users\/(\d+)/;
@@ -88,6 +99,10 @@ export class GensakuBot {
 
         const artworkUrlRegex = /pixiv\.net\/(?:en\/)?artworks\/(\d+)/;
         this.bot.hears(artworkUrlRegex, (ctx) => illustCommand(ctx as unknown as BotContext));
+
+        // Match command aliases: /artist_123 and /illust_123 (for clickable links)
+        this.bot.hears(/^\/artist_(\d+)$/, (ctx) => artistCommand(ctx as unknown as BotContext));
+        this.bot.hears(/^\/illust_(\d+)$/, (ctx) => illustCommand(ctx as unknown as BotContext));
 
         // Callback Queries
         this.bot.on("callback_query:data", async (ctx) => {
@@ -261,7 +276,7 @@ export class GensakuBot {
                     }
 
                 } catch (error) {
-                    console.error("Failed to trigger force-update:", error);
+                    logger.error("Failed to trigger force-update:", error);
                     await ctx.reply(ctx.t("error-generic"));
                 }
             } else if (data.startsWith("view_artist:")) {
@@ -284,7 +299,7 @@ export class GensakuBot {
                         await ctx.reply(ctx.t("no-illusts-found"));
                     }
                 } catch (e) {
-                    console.error("Error viewing latest illust:", e);
+                    logger.error("Error viewing latest illust:", e);
                     await ctx.reply(ctx.t("error-generic"));
                 }
             } else if (data.startsWith("view_illust:")) {
@@ -309,7 +324,7 @@ export class GensakuBot {
                      await sendIllust(ctx as unknown as BotContext, illust);
                      
                  } catch (e) {
-                     console.error("Error viewing illust:", e);
+                     logger.error("Error viewing illust:", e);
                      await ctx.reply(ctx.t("error-generic"));
                  }
             }
@@ -319,26 +334,60 @@ export class GensakuBot {
         this.bot.catch((err) => {
             const e = err.error;
             if (!this.stacktrace && e instanceof GrammyError) {
-                console.error(`GrammyError: ${e.error_code} ${e.description}`);
+                logger.error(`GrammyError: ${e.error_code} ${e.description}`);
             } else if (!this.stacktrace && e instanceof HttpError) {
-                console.error(`HttpError: ${e.message}`);
+                logger.error(`HttpError: ${e.message}`);
             } else {
-                console.error("Bot Error:", err);
+                logger.error("Bot Error:", err);
             }
         });
     }
 
     async start() {
-        console.log("Starting Bot...");
+        logger.info("Starting Bot...");
 
         // Start Webhook Server
         const webhookPort = parseInt(process.env.WEBHOOK_PORT || "3001");
         Bun.serve(this.webhookServer.start(webhookPort));
 
+        // Initial Sync
+        this.syncSubscriptions().catch(err => {
+            logger.error("Initial sync failed:", err);
+        });
+
         await this.bot.start({
             onStart: (botInfo) => {
-                console.log(`Bot @${botInfo.username} started!`);
+                logger.info(`Bot @${botInfo.username} started!`);
             },
         });
+    }
+
+    async syncSubscriptions() {
+        logger.info("Syncing subscriptions with Core API...");
+        const subs = this.db.getAllSubscriptions();
+        const artistIds = Array.from(new Set(subs.map(s => s.illustrator_id)));
+        let count = 0;
+
+        for (const artistId of artistIds) {
+            try {
+                // Find a subscription with last_pid to use as hint
+                const sub = subs.find(s => s.illustrator_id === artistId && s.last_pid);
+                const lastPid = sub?.last_pid;
+
+                await fetch(`${this.coreApiUrl}/api/monitor`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        artist_id: artistId,
+                        last_pid: lastPid
+                    })
+                });
+                count++;
+            } catch (e) {
+                logger.error(`Failed to sync artist ${artistId}:`, e);
+            }
+        }
+        logger.info(`Synced ${count} artists.`);
+        return count;
     }
 }

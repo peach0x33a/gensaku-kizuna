@@ -1,5 +1,5 @@
 import { AuthManager } from "./auth";
-import { getPixivHeaders } from "./utils";
+import { getPixivHeaders, logger } from "./utils";
 import { loadConfig } from "./config";
 import type {
   Illust,
@@ -31,7 +31,7 @@ export class PixivClient {
 
     // Refresh if no token or expired (with 1 min buffer)
     if (!this.accessToken || !this.expiresAt || Date.now() > this.expiresAt - 60000) {
-      console.log("Refreshing Pixiv access token...");
+      logger.info("Refreshing Pixiv access token...");
       const data = await AuthManager.refresh(this.refreshToken);
       this.accessToken = data.access_token;
       this.refreshToken = data.refresh_token;
@@ -66,7 +66,7 @@ export class PixivClient {
 
     if (!response.ok) {
       const err = await response.text();
-      console.error(`Pixiv API Request Failed: ${path}`, { status: response.status, body: err });
+      logger.error(`Pixiv API Request Failed: ${path}`, { status: response.status, body: err });
       throw new Error(`Pixiv API Error: ${response.status} ${err}`);
     }
 

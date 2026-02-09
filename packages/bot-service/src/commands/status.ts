@@ -1,5 +1,6 @@
 import { BotContext } from "../context";
 import { CommandContext, InlineKeyboard } from "grammy";
+import { logger } from "../utils";
 
 export async function statusCommand(ctx: CommandContext<BotContext>) {
     const checkingMsg = await ctx.reply(ctx.t("checking-status"));
@@ -9,7 +10,7 @@ export async function statusCommand(ctx: CommandContext<BotContext>) {
     try {
         await ctx.api.getMe();
     } catch (e) {
-        console.error("Failed to ping Telegram API:", e);
+        logger.error("Failed to ping Telegram API:", e);
     }
     const telegramLatency = Date.now() - start;
 

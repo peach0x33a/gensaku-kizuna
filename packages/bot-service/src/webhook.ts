@@ -4,7 +4,7 @@ import { BotContext } from "./context";
 import { Bot, InlineKeyboard } from "grammy";
 import { DB } from "./database";
 import { i18n } from "./locales";
-import { logDebug, escapeHtml } from "./utils";
+import { logDebug, escapeHtml, logger } from "./utils";
 import { formatIllustMessage } from "./messages";
 import { sendIllustToChat } from "./commands/illust";
 
@@ -27,17 +27,17 @@ export class WebhookServer {
                     return c.json({ status: "ok" });
                 }
 
-                console.warn(`Webhook received unknown type: ${body.type}`);
+                logger.warn(`Webhook received unknown type: ${body.type}`);
                 return c.json({ error: "Unknown type" }, 400);
             } catch (e: any) {
-                console.error("Error processing webhook:", e);
+                logger.error("Error processing webhook:", e);
                 return c.json({ error: e.message }, 500);
             }
         });
     }
 
     private async handleNewArtwork(artistId: string, illust: any) {
-        console.log(`Received Webhook: New artwork from ${artistId} (${illust.id})`);
+        logger.info(`Received Webhook: New artwork from ${artistId} (${illust.id})`);
 
         // Find subscribers
         const allSubs = this.db.getAllSubscriptions();
@@ -66,14 +66,14 @@ export class WebhookServer {
                 // Use shared logic for consistent style
                 if (this.coreApiUrl) {
                     await sendIllustToChat(
-                        this.bot.api, 
-                        sub.user_id, 
-                        illust, 
+                        this.bot.api,
+                        sub.user_id,
+                        illust,
                         t,
                         this.coreApiUrl
                     );
                 } else {
-                    console.error("Core API URL missing in WebhookServer!");
+                    logger.error("Core API URL missing in WebhookServer!");
                     // Fallback to basic if config missing (shouldn't happen)
                     const messageData = formatIllustMessage(illust, t);
                      await this.bot.api.sendPhoto(sub.user_id, messageData.media as string, {
@@ -86,20 +86,20 @@ export class WebhookServer {
                 
                 logDebug(`Sent update to user ${sub.user_id}`);
             } catch (e: any) {
-                console.error(`DEBUG: Failed to notify user ${sub.user_id}:`, e.message || e);
+                logger.error(`DEBUG: Failed to notify user ${sub.user_id}:`, e.message || e);
                 // Fallback
                 try {
                     logDebug(`Fallback to text for user ${sub.user_id}...`);
                     await this.bot.api.sendMessage(sub.user_id, t("fallback-text", { title: escapeHtml(illust.title) }) + `\n${illust.image_urls.large}`);
                 } catch (e2: any) {
-                    console.error(`DEBUG: Fallback failed for user ${sub.user_id}:`, e2.message);
+                    logger.error(`DEBUG: Fallback failed for user ${sub.user_id}:`, e2.message);
                 }
             }
         }
     }
 
     start(port: number) {
-        console.log(`Webhook server listening on port ${port}`);
+        logger.info(`Webhook server listening on port ${port}`);
         return {
             port: port,
             fetch: this.app.fetch,

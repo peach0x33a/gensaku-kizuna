@@ -1,5 +1,5 @@
 import { BotContext } from "../context";
-import { cleanId } from "../utils";
+import { cleanId, logger } from "../utils";
 import { loadConfig } from "../config";
 import { InlineKeyboard } from "grammy";
 
@@ -26,7 +26,7 @@ export async function unsubscribeLogic(ctx: BotContext, artistId: string, userId
                 method: "DELETE",
             });
         } catch (e) {
-            console.error(`Failed to remove monitored artist ${cleanedArtistId} from Core API:`, e);
+            logger.error(`Failed to remove monitored artist ${cleanedArtistId} from Core API:`, e);
             // Non-critical error, just log it
         }
     }

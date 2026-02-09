@@ -2,7 +2,7 @@ import { Hono, Context } from "hono";
 import { stream } from "hono/streaming";
 import { PixivClient } from "./client";
 import { loadConfig } from "./config";
-import { getPixivHeaders, cleanId } from "./utils";
+import { getPixivHeaders, cleanId, logger } from "./utils";
 import { CoreDB } from "./database";
 import { CoreScheduler } from "./scheduler";
 
@@ -10,16 +10,15 @@ const app = new Hono();
 
 // Logger Middleware
 app.use("*", async (c, next) => {
-  const time = new Date().toISOString();
   const method = c.req.method;
   const url = c.req.url;
-  console.log(`[${time}] ${method} ${url}`);
+  logger.info(`${method} ${url}`);
   await next();
 });
 
 const config = loadConfig();
 const client = new PixivClient(config.pixiv.refreshToken);
-const db = new CoreDB();
+const db = new CoreDB(config.database.url);
 const botWebhookUrl = process.env.BOT_WEBHOOK_URL || "http://localhost:3001/webhook";
 const scheduler = new CoreScheduler(db, client, botWebhookUrl);
 
@@ -44,8 +43,8 @@ app.get("/api/health/pixiv", async (c: Context) => {
 });
 
 app.onError((err, c) => {
-  console.error(`[Unhandled Error] ${c.req.method} ${c.req.url}:`, err);
-  return c.json({ error: err.message }, 500);
+logger.error(`[Unhandled Error] ${c.req.method} ${c.req.url}:`, err);
+return c.json({ error: err.message }, 500);
 });
 
 app.post("/api/monitor", async (c: Context) => {
@@ -81,7 +80,7 @@ app.post("/api/force-update", async (c: Context) => {
         lastCheckedIllustId: result.lastCheckedIllustId
     });
   } catch (e: any) {
-    console.error("Error in force-update:", e);
+    logger.error("Error in force-update:", e);
     return c.json({ error: e.message }, 500);
   }
 });
@@ -93,7 +92,7 @@ app.get("/api/user/:id/illusts", async (c: Context) => {
     const res = await client.getUserIllusts(id, type);
     return c.json(res);
   } catch (e: any) {
-    console.error(`Error fetching user ${id} illusts:`, e);
+    logger.error(`Error fetching user ${id} illusts:`, e);
     return c.json({ error: e.message }, 500);
   }
 });
@@ -104,7 +103,7 @@ app.get("/api/illust/:id", async (c: Context) => {
     const res = await client.getIllustDetail(id);
     return c.json(res);
   } catch (e: any) {
-    console.error(`Error fetching illust ${id} detail:`, e);
+    logger.error(`Error fetching illust ${id} detail:`, e);
     return c.json({ error: e.message }, 500);
   }
 });
@@ -115,7 +114,7 @@ app.get("/api/user/:id", async (c: Context) => {
     const res = await client.getUserDetail(id);
     return c.json(res);
   } catch (e: any) {
-    console.error(`Error fetching user ${id} detail:`, e);
+    logger.error(`Error fetching user ${id} detail:`, e);
     return c.json({ error: e.message }, 500);
   }
 });
@@ -126,7 +125,7 @@ app.get("/api/ugoira/:id", async (c: Context) => {
     const res = await client.getUgoiraMetadata(id);
     return c.json(res);
   } catch (e: any) {
-    console.error(`Error fetching ugoira ${id} metadata:`, e);
+    logger.error(`Error fetching ugoira ${id} metadata:`, e);
     return c.json({ error: e.message }, 500);
   }
 });
@@ -160,7 +159,7 @@ app.get("/api/proxy-image", async (c) => {
     });
 
   } catch (e: any) {
-    console.error(`Error proxying image ${url}:`, e);
+    logger.error(`Error proxying image ${url}:`, e);
     return c.json({ error: e.message }, 500);
   }
 });
@@ -203,7 +202,7 @@ app.get("/api/illust/:id/zip", async (c) => {
 
     return c.body(content as any);
   } catch (e: any) {
-    console.error(`Error zipping illust ${id}:`, e);
+    logger.error(`Error zipping illust ${id}:`, e);
     return c.json({ error: e.message }, 500);
   }
 });

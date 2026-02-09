@@ -1,7 +1,7 @@
 import { BotContext } from "../context";
 import { InlineKeyboard } from "grammy";
 import { loadConfig } from "../config";
-import { cleanId, escapeHtml } from "../utils";
+import { cleanId, escapeHtml, logger } from "../utils";
 
 export async function generateSubscriptionListMessage(ctx: BotContext, userId: string, recentlyUnsubscribedId?: string) {
     const subs = ctx.db.getSubscriptions(userId);
@@ -25,7 +25,7 @@ export async function generateSubscriptionListMessage(ctx: BotContext, userId: s
             monitoredArtists = await res.json() as any[];
         }
     } catch (e) {
-        console.error("Failed to fetch monitored artists from Core API", e);
+        logger.error("Failed to fetch monitored artists from Core API", e);
     }
 
     let message = ctx.t("subscriptions-list") + "\n\n";
@@ -46,7 +46,8 @@ export async function generateSubscriptionListMessage(ctx: BotContext, userId: s
                 name: escapeHtml(name),
                 id: cleanId(sub.illustrator_id),
                 lastPid: cleanId(lastPid),
-                updatedAt: updatedAt
+                updatedAt: updatedAt,
+                botUsername: ctx.me?.username || "GensakuKizunaBot"
             }) + "\n";
         }
     }
@@ -66,7 +67,7 @@ export async function generateSubscriptionListMessage(ctx: BotContext, userId: s
     }
     
     if (recentlyUnsubscribedId) {
-        keyboard.text(ctx.t("btn-resubscribe"), `resub:${recentlyUnsubscribedId}`).row();
+        keyboard.text(ctx.t("btn-resubscribe"), `sub:${recentlyUnsubscribedId}`).row();
     }
 
     keyboard.text(

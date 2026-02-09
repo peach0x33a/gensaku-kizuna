@@ -2,10 +2,29 @@ import { loadConfig } from "./config";
 
 const config = loadConfig();
 
-export function logDebug(message: string, ...args: any[]) {
-    if (config.debug) {
-        console.log(`[DEBUG] ${message}`, ...args);
+export const logger = {
+    info: (message: string, ...args: any[]) => {
+        const time = new Date().toISOString();
+        console.log(`[${time}] [INFO] ${message}`, ...args);
+    },
+    error: (message: string, ...args: any[]) => {
+        const time = new Date().toISOString();
+        console.error(`[${time}] [ERROR] ${message}`, ...args);
+    },
+    warn: (message: string, ...args: any[]) => {
+        const time = new Date().toISOString();
+        console.warn(`[${time}] [WARN] ${message}`, ...args);
+    },
+    debug: (message: string, ...args: any[]) => {
+        if (config.debug) {
+            const time = new Date().toISOString();
+            console.log(`[${time}] [DEBUG] ${message}`, ...args);
+        }
     }
+};
+
+export function logDebug(message: string, ...args: any[]) {
+    logger.debug(message, ...args);
 }
 
 /**

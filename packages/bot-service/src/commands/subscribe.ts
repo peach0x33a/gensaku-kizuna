@@ -1,6 +1,6 @@
 import { BotContext } from "../context";
 import { CommandContext } from "grammy";
-import { cleanId } from "../utils";
+import { cleanId, logger } from "../utils";
 
 export async function subscribeLogic(ctx: BotContext, artistId: string, userId: string) {
     const cleanedArtistId = cleanId(artistId);
@@ -32,7 +32,7 @@ export async function subscribeLogic(ctx: BotContext, artistId: string, userId: 
                 }
             }
         } catch (e) {
-            console.error("Failed to fetch initial last_pid", e);
+            logger.error("Failed to fetch initial last_pid", e);
         }
 
         // 2. Add to DB (Local Bot Subscription)
@@ -50,7 +50,7 @@ export async function subscribeLogic(ctx: BotContext, artistId: string, userId: 
                 })
             });
         } catch (e) {
-            console.error("Failed to register monitor with Core API", e);
+            logger.error("Failed to register monitor with Core API", e);
         }
 
         // 4. Confirm
@@ -64,7 +64,7 @@ export async function subscribeLogic(ctx: BotContext, artistId: string, userId: 
 
         return { success: true, message };
     } catch (error: any) {
-        console.error(error);
+        logger.error(error);
         const failMessage = ctx.t("failed-subscribe", { error: error.message });
         await ctx.reply(failMessage);
         return { success: false, message: failMessage };

@@ -30,9 +30,9 @@ subscriptions-empty = 你没有订阅任何画师。
 subscriptions-list = 你的订阅列表：
 subscriptions-list-item = - 画师 ID：`{ $id }`
 subscriptions-list-item-detailed =
-    👤 <b><a href="tg://msg?text=/artist%20{ $id }">{ $name }</a></b> (<a href="tg://msg?text=/artist%20{ $id }">{ $id }</a>)
-    🆕 最后作品：<a href="tg://msg?text=/illust%20{ $lastPid }">{ $lastPid }</a>
-    🕒 更新时间：{ $updatedAt }
+    👤 <b><a href="https://t.me/{ $botUsername }?start=artist_{ $id }">{ $name }</a></b> (<code>{ $id }</code>)
+    🆕 最后作品：<a href="https://t.me/{ $botUsername }?start=illust_{ $lastPid }">{ $lastPid }</a>
+    🕒 上次检查：{ $updatedAt }
 
 operation-menu = 🔧 操作菜单 ({ $id })
 run-list-to-see = 运行 /list 查看订阅。

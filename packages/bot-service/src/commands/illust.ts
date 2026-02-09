@@ -3,7 +3,7 @@ import { BotContext } from "../context";
 import { CommandContext, InlineKeyboard, HearsContext, Api } from "grammy";
 import { type InputMediaPhoto } from "grammy/types";
 import { Illust, UgoiraMetadata } from "@gensaku-kizuna/core-api";
-import { cleanId, escapeHtml } from "../utils";
+import { cleanId, escapeHtml, logger } from "../utils";
 import { formatIllustMessage } from "../messages";
 
 export async function illustCommand(ctx: BotContext) {
@@ -65,7 +65,7 @@ export async function illustCommand(ctx: BotContext) {
         await sendIllust(ctx, illust);
 
     } catch (error) {
-        console.error("Illust command error:", error);
+        logger.error("Illust command error:", error);
         if (ctx.chat) {
             try { await ctx.api.deleteMessage(ctx.chat.id, LOADING_MSG.message_id); } catch { }
             await ctx.reply(ctx.t("error-generic") + `: ${error instanceof Error ? error.message : String(error)}`);
@@ -169,7 +169,7 @@ export async function downloadOriginalLogic(ctx: BotContext, illustId: string) {
         });
 
     } catch (error) {
-        console.error("Download Original Error", error);
+        logger.error("Download Original Error", error);
         await ctx.reply(ctx.t("error-generic"));
     }
 }
@@ -189,7 +189,7 @@ export async function downloadZipLogic(ctx: BotContext, illustId: string) {
         });
 
     } catch (error) {
-        console.error("Download Zip Error", error);
+        logger.error("Download Zip Error", error);
         await ctx.reply(ctx.t("error-generic"));
     }
 }
@@ -227,7 +227,7 @@ export async function pageSelectionLogic(ctx: BotContext, illustId: string, offs
         });
 
     } catch (error) {
-        console.error("Page Selection Error", error);
+        logger.error("Page Selection Error", error);
         await ctx.reply(ctx.t("error-generic"));
     }
 }
@@ -250,7 +250,7 @@ export async function downloadPageLogic(ctx: BotContext, illustId: string, pageI
         });
 
     } catch (error) {
-        console.error("Download Page Error", error);
+        logger.error("Download Page Error", error);
         await ctx.reply(ctx.t("error-generic"));
     }
 }

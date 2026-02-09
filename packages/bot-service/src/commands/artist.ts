@@ -1,7 +1,7 @@
 import { BotContext } from "../context";
 import { CommandContext, InlineKeyboard, HearsContext, Api } from "grammy";
 import { UserDetail } from "@gensaku-kizuna/core-api";
-import { cleanId } from "../utils";
+import { cleanId, logger } from "../utils";
 
 // Accept a broader context that includes BotContext properties
 export async function artistCommand(ctx: BotContext) {
@@ -49,7 +49,7 @@ export async function artistCommand(ctx: BotContext) {
         await ctx.replyWithChatAction("typing");
         await sendArtist(ctx, artistId, LOADING_MSG.message_id);
     } catch (error) {
-        console.error("Artist command error:", error);
+        logger.error("Artist command error:", error);
         if (ctx.chat) {
             try { await ctx.api.deleteMessage(ctx.chat.id, LOADING_MSG.message_id); } catch { }
             await ctx.reply(ctx.t("error-generic") + `: ${error instanceof Error ? error.message : String(error)}`);
@@ -112,8 +112,8 @@ export async function sendArtist(ctx: BotContext, artistId: string, loadingMessa
             reply_markup: keyboard
         });
     } catch (e) {
-        console.error("Failed to send photo via pixiv.re, falling back to text:", e);
-        await ctx.reply(caption, { 
+        logger.error("Failed to send photo via pixiv.re, falling back to text:", e);
+        await ctx.reply(caption, {
             parse_mode: "HTML",
             reply_markup: keyboard
         });

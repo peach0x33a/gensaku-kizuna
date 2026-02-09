@@ -5,9 +5,9 @@ services:
       dockerfile: packages/core-api/Dockerfile
     network_mode: "host"
     env_file:
-      - .env
-    environment:
-      - API_DB_URL=file:./core.db
+      - .env.docker
+    volumes:
+      - ./data:/usr/src/app/data
     restart: always
 
   bot-service:
@@ -18,7 +18,7 @@ services:
       - core-api
     network_mode: "host"
     env_file:
-      - .env
-    environment:
-      - BOT_DB_URL=file:./bot.db
+      - .env.docker
+    volumes:
+      - ./data:/usr/src/app/data
     restart: always
